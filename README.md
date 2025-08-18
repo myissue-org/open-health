@@ -31,8 +31,6 @@ cd open-health
 
 Thank you for considering contributing to this project.
 
-.
-
 ## Security Vulnerabilities
 
 If you discover a security vulnerability within Laravel, please send us an e-mail.
