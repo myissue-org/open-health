@@ -23,7 +23,29 @@ class UserFactory extends Factory
      */
     public function definition(): array
     {
-        return [];
+        return [
+            'first_name'       => 'Qais',
+            'last_name'        => 'Wardag',
+            'email'            => 'qw@myissue.dk',
+            'password'         => '123456',
+            'country'          => 'Denmark',
+            'city'             => 'Copenhagen',
+            'state'            => null,
+            'line1'            => null,
+            'line2'            => null,
+            'postal_code'      => null,
+            'phone_code'       => null,
+            'vat_id'           => null,
+            'tax_id'           => null,
+            'vat_number'       => null,
+            'phone'            => null,
+            'job_title'        => null,
+            'username'         => 'qaiswardag',
+            'content'          => null,
+            'public'           => true,
+            'email_verified_at' => now(),
+            'current_team_id'  => 1,
+        ];
     }
 
     /**

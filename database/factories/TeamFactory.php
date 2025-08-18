@@ -17,7 +17,14 @@ class TeamFactory extends Factory
     public function definition(): array
     {
         return [
-            //
+            'user_id'          => 1,
+            'name'             => 'MyISSUE',
+            'address'          => null,
+            'contact_page_url' => 'https://myissue.dk',
+            'slug'             => 'myissue',
+            'content'          => NULL,
+            'public'           => true,
+            'personal_team'    => false,
         ];
     }
 }
