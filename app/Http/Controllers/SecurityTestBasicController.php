@@ -29,7 +29,9 @@ class SecurityTestBasicController extends Controller
      */
     public function store(StoreSecurityTestBasicRequest $request)
     {
-        //
+        $test = SecurityTestBasic::create($request->validated());
+
+        return response()->json($test, 201);
     }
 
     /**
@@ -37,7 +39,7 @@ class SecurityTestBasicController extends Controller
      */
     public function show(SecurityTestBasic $securityTestBasic)
     {
-        //
+        return response()->json(['message' => $securityTestBasic]);
     }
 
     /**
