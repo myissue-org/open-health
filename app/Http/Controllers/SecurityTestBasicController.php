@@ -35,11 +35,18 @@ class SecurityTestBasicController extends Controller
     }
 
     /**
-     * Display the specified resource.
+     * Display the specified resource with its related website.
      */
     public function show(SecurityTestBasic $securityTestBasic)
     {
-        return response()->json(['message' => $securityTestBasic]);
+        // Eager load the related website
+        $securityTestBasic->load('website');
+
+        if (!$securityTestBasic->website) {
+            return response()->json(['error' => 'Related website not found.'], 404);
+        }
+
+        return response()->json($securityTestBasic);
     }
 
     /**
