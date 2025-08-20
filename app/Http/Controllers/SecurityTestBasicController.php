@@ -30,7 +30,7 @@ class SecurityTestBasicController extends Controller
      */
     public function store(StoreSecurityTestBasicRequest $request)
     {
-        return response()->json(['message' => 'hiii.']);
+        return response()->json(['message' => $request->input('url')]);
 
         // Create or find the website
         $website = ScannedWebsiteBasic::firstOrCreate(
