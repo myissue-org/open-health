@@ -29,4 +29,20 @@ class StoreSecurityTestBasicRequest extends FormRequest
             'url' => ['required', 'string', 'min:2', 'max:255'],
         ];
     }
+
+    /**
+     * Add custom validation after default rules.
+     */
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+            $url = $this->input('url');
+            if ($url && !preg_match('#^https?://#i', $url)) {
+                $validator->errors()->add('url', 'The url must start with http:// or https://');
+            }
+            if ($url && !preg_match('/\./', $url)) {
+                $validator->errors()->add('url', 'The url must contain a dot (.) and be a valid domain.');
+            }
+        });
+    }
 }

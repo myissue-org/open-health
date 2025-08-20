@@ -6,6 +6,7 @@ use App\Http\Requests\StoreSecurityTestBasicRequest;
 use App\Http\Requests\UpdateSecurityTestBasicRequest;
 use App\Models\ScannedWebsiteBasic;
 use App\Models\SecurityTestBasic;
+use App\Helpers\UrlHelper;
 
 class SecurityTestBasicController extends Controller
 {
@@ -30,8 +31,10 @@ class SecurityTestBasicController extends Controller
      */
     public function store(StoreSecurityTestBasicRequest $request)
     {
-        return response()->json(['message' => $request->input('url')]);
+        $scheme = UrlHelper::getScheme($request->input('url')); // 'http' or 'https'
+        $normalizedUrl = UrlHelper::normalizeUrl($request->input('url'));
 
+        return response()->json(['normalizedUrl' => $normalizedUrl, 'scheme' => $scheme]);
         // Create or find the website
         $website = ScannedWebsiteBasic::firstOrCreate(
             ['url' => $request->input('url')],
