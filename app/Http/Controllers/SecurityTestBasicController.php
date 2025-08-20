@@ -54,12 +54,20 @@ class SecurityTestBasicController extends Controller
             ['url' => $url, 'title' => $title]
         );
 
-        return response()->json(['first name' => $first_name, 'last name' => $last_name, 'email' => $email]);
+        // return response()->json(['first name' => $first_name, 'last name' => $last_name, 'email' => $email]);
         // return response()->json(['result' => $website]);
 
-        $test = SecurityTestBasic::create($request->validated());
 
-        return response()->json($test, 201);
+        $createdSecurityTest = SecurityTestBasic::create([
+            'website_id' => $website->id,
+            // true if scheme is 'https', false otherwise
+            'https' => $scheme === 'https',
+            'first_name' => $first_name,
+            'last_name' => $last_name,
+            'email' => $email,
+        ]);
+
+        return response()->json($createdSecurityTest, 201);
     }
 
     /**

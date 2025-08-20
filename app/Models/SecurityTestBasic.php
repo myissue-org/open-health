@@ -12,6 +12,7 @@ class SecurityTestBasic extends Model
 
     // Only allow safe fields from frontend
     protected $fillable = [
+        'website_id',
         'score',
         'https',
         'tls_version',
