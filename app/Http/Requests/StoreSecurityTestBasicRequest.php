@@ -27,6 +27,7 @@ class StoreSecurityTestBasicRequest extends FormRequest
     {
         return [
             'url' => ['required', 'string', 'min:2', 'max:255'],
+            'title' => ['required', 'string', 'min:2', 'max:255'],
         ];
     }
 

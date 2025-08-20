@@ -46,12 +46,9 @@ class SecurityTestBasicController extends Controller
         // return response()->json(['result' => $normalizedUrl]);
 
         // Create or find the website by slug
-        $website = ScannedWebsiteBasic::create(
-            [
-                'url' => $url,
-                'slug' => $normalizedUrl,
-                // add other fields as needed
-            ]
+        $website = ScannedWebsiteBasic::firstOrCreate(
+            ['slug' => $normalizedUrl],
+            ['url' => $url]
         );
 
         return response()->json(['result' => $website]);
