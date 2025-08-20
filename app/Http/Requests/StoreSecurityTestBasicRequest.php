@@ -26,6 +26,7 @@ class StoreSecurityTestBasicRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'url' => ['required', 'string', 'min:2', 'max:4'],
             'website_id' => ['required', Rule::exists('scanned_website_basics', 'id')],
             'score' => ['nullable', 'integer'],
             'https' => ['nullable', 'boolean'],

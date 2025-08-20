@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreSecurityTestBasicRequest;
 use App\Http\Requests\UpdateSecurityTestBasicRequest;
+use App\Models\ScannedWebsiteBasic;
 use App\Models\SecurityTestBasic;
 
 class SecurityTestBasicController extends Controller
@@ -29,6 +30,19 @@ class SecurityTestBasicController extends Controller
      */
     public function store(StoreSecurityTestBasicRequest $request)
     {
+        return response()->json(['message' => 'hiii.']);
+
+        // Create or find the website
+        $website = ScannedWebsiteBasic::firstOrCreate(
+            ['url' => $request->input('url')],
+            [
+                'name' => $request->input('name', ''), // or set a default
+                'description' => $request->input('description', ''),
+                'created_by' => $request->input('created_by', null),
+            ]
+        );
+
+
         $test = SecurityTestBasic::create($request->validated());
 
         return response()->json($test, 201);
