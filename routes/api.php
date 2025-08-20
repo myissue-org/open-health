@@ -28,5 +28,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::middleware([])->group(function () {
-    Route::apiResource('security-test-basics', SecurityTestBasicController::class);
+    Route::prefix('v1')->group(function () {
+        Route::apiResource('security-test-basics', SecurityTestBasicController::class);
+    });
 });
