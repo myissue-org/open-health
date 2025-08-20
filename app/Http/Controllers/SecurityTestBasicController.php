@@ -31,20 +31,26 @@ class SecurityTestBasicController extends Controller
      */
     public function store(StoreSecurityTestBasicRequest $request)
     {
-        $scheme = UrlHelper::getScheme($request->input('url')); // 'http' or 'https'
+        $url = $request->input('url');
+
+        // Remove 'www.' from the beginning of a URL string if present.
+        $slug = UrlHelper::removeWww($request->input('url'));
+
+        //  Returns the scheme ('http' or 'https') of a URL, or null if not present.
+        $scheme = UrlHelper::getScheme($request->input('url'));
+
+        // Normalizes a URL by converting to lowercase, removing the scheme (http/https),
+        //  removing 'www.' if present, and trimming any trailing slash.
         $normalizedUrl = UrlHelper::normalizeUrl($request->input('url'));
 
-        return response()->json(['normalizedUrl' => $normalizedUrl, 'scheme' => $scheme]);
         // Create or find the website
         $website = ScannedWebsiteBasic::firstOrCreate(
-            ['url' => $request->input('url')],
-            [
-                'name' => $request->input('name', ''), // or set a default
-                'description' => $request->input('description', ''),
-                'created_by' => $request->input('created_by', null),
-            ]
+            ['url' => $url],
+            ['slug' => $slug],
         );
 
+        return response()->json(['result' => $website]);
+        // return response()->json(['normalizedUrl' => $normalizedUrl, 'scheme' => $scheme]);
 
         $test = SecurityTestBasic::create($request->validated());
 
