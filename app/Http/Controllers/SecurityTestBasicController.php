@@ -33,6 +33,9 @@ class SecurityTestBasicController extends Controller
     {
         $title = $request->input('title');
         $url = $request->input('url');
+        $first_name = $request->input('first_name');
+        $last_name = $request->input('last_name');
+        $email = $request->input('email');
 
         // Remove 'www.' from the beginning of a URL string if present.
         $slug = UrlHelper::removeWww($request->input('url'));
@@ -51,7 +54,8 @@ class SecurityTestBasicController extends Controller
             ['url' => $url, 'title' => $title]
         );
 
-        return response()->json(['result' => $website]);
+        return response()->json(['first name' => $first_name, 'last name' => $last_name, 'email' => $email]);
+        // return response()->json(['result' => $website]);
 
         $test = SecurityTestBasic::create($request->validated());
 

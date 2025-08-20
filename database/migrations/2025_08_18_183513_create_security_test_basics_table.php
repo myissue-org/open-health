@@ -45,6 +45,10 @@ return new class extends Migration
             $table->boolean('dns_dkim')->default(false);
             $table->boolean('dns_dmarc')->default(false);
 
+            $table->string('first_name')->nullable();
+            $table->string('last_name')->nullable();
+            $table->string('email')->nullable();
+
 
             $table->timestamps();
         });

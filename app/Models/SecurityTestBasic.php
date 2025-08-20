@@ -28,6 +28,10 @@ class SecurityTestBasic extends Model
         'dns_dmarc',
         'website_prefix',
         'test_ran_at',
+
+        'first_name',
+        'last_name',
+        'email',
     ];
 
     // Relation back to website

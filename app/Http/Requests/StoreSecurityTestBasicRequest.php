@@ -28,6 +28,9 @@ class StoreSecurityTestBasicRequest extends FormRequest
         return [
             'url' => ['required', 'string', 'min:2', 'max:255'],
             'title' => ['required', 'string', 'min:2', 'max:255'],
+            'first_name' => ['nullable', 'string', 'min:2', 'max:255'],
+            'last_name' => ['nullable', 'string', 'min:2', 'max:255'],
+            'email' => ['nullable', 'string', 'email', 'min:2', 'max:255'],
         ];
     }
 
