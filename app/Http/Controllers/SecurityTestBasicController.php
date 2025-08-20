@@ -59,7 +59,7 @@ class SecurityTestBasicController extends Controller
             'test_ran_at' => now(),
             'score' => 0,
             'https' => $scheme === 'https',
-            'website_prefix' => $scheme ?? 'http',
+            'website_prefix' => $scheme,
             'tls_version' => 'TLS 1.3', // fake data
             'ssl_expiry_date' => now()->addYear()->toDateString(), // fake data
             'has_csp' => false,
