@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateSecurityTestBasicRequest;
 use App\Models\ScannedWebsiteBasic;
 use App\Models\SecurityTestBasic;
 use App\Helpers\UrlHelper;
+use App\Services\WebsiteSecurityScanner;
 
 class SecurityTestBasicController extends Controller
 {
@@ -54,24 +55,29 @@ class SecurityTestBasicController extends Controller
             ['url' => $url, 'title' => $title]
         );
 
+        $scanner = new WebsiteSecurityScanner();
+        $scanResults = $scanner->scan($url);
+
         $createdSecurityTest = SecurityTestBasic::create([
             'website_id' => $website->id,
             'test_ran_at' => now(),
             'score' => 0,
             'https' => $scheme === 'https',
             'website_prefix' => $scheme,
-            'tls_version' => 'TLS 1.3', // fake data
-            'ssl_expiry_date' => now()->addYear()->toDateString(), // fake data
-            'has_csp' => false,
-            'has_x_frame_options' => false,
-            'has_hsts' => false,
-            'has_x_content_type_options' => false,
-            'server_header' => 'nginx/1.23.0', // fake data
-            'dns_a_record' => false,
-            'dns_aaaa_record' => false,
-            'dns_spf' => false,
-            'dns_dkim' => false,
-            'dns_dmarc' => false,
+
+            'tls_version' => $scanResults['tls_version'],
+            'ssl_expiry_date' => $scanResults['ssl_expiry_date'],
+            'has_csp' => $scanResults['has_csp'],
+            'has_x_frame_options' => $scanResults['has_x_frame_options'],
+            'has_hsts' => $scanResults['has_hsts'],
+            'has_x_content_type_options' => $scanResults['has_x_content_type_options'],
+            'server_header' => $scanResults['server_header'],
+            'dns_a_record' => $scanResults['dns_a_record'],
+            'dns_aaaa_record' => $scanResults['dns_aaaa_record'],
+            'dns_spf' => $scanResults['dns_spf'],
+            'dns_dkim' => $scanResults['dns_dkim'],
+            'dns_dmarc' => $scanResults['dns_dmarc'],
+
             'first_name' => $first_name,
             'last_name' => $last_name,
             'email' => $email,
