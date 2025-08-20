@@ -14,6 +14,7 @@ class ScannedWebsiteBasic extends Model
     protected $fillable = [
         'name',
         'url',
+        'slug',
         'description',
         'created_by', // example
     ];

@@ -40,13 +40,18 @@ class SecurityTestBasicController extends Controller
         $scheme = UrlHelper::getScheme($request->input('url'));
 
         // Normalizes a URL by converting to lowercase, removing the scheme (http/https),
-        //  removing 'www.' if present, and trimming any trailing slash.
+        // removing 'www.' if present, and trimming any trailing slash.
         $normalizedUrl = UrlHelper::normalizeUrl($request->input('url'));
 
-        // Create or find the website
-        $website = ScannedWebsiteBasic::firstOrCreate(
-            ['url' => $url],
-            ['slug' => $slug],
+        // return response()->json(['result' => $normalizedUrl]);
+
+        // Create or find the website by slug
+        $website = ScannedWebsiteBasic::create(
+            [
+                'url' => $url,
+                'slug' => $normalizedUrl,
+                // add other fields as needed
+            ]
         );
 
         return response()->json(['result' => $website]);
