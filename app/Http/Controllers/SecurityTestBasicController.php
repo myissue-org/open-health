@@ -54,19 +54,30 @@ class SecurityTestBasicController extends Controller
             ['url' => $url, 'title' => $title]
         );
 
-        // return response()->json(['first name' => $first_name, 'last name' => $last_name, 'email' => $email]);
-        // return response()->json(['result' => $website]);
-
-
         $createdSecurityTest = SecurityTestBasic::create([
             'website_id' => $website->id,
-            // true if scheme is 'https', false otherwise
+            'test_ran_at' => now(),
+            'score' => 0,
             'https' => $scheme === 'https',
+            'website_prefix' => $scheme ?? 'http',
+            'tls_version' => 'TLS 1.3', // fake data
+            'ssl_expiry_date' => now()->addYear()->toDateString(), // fake data
+            'has_csp' => false,
+            'has_x_frame_options' => false,
+            'has_hsts' => false,
+            'has_x_content_type_options' => false,
+            'server_header' => 'nginx/1.23.0', // fake data
+            'dns_a_record' => false,
+            'dns_aaaa_record' => false,
+            'dns_spf' => false,
+            'dns_dkim' => false,
+            'dns_dmarc' => false,
             'first_name' => $first_name,
             'last_name' => $last_name,
             'email' => $email,
         ]);
 
+        $createdSecurityTest->load('website');
         return response()->json($createdSecurityTest, 201);
     }
 
