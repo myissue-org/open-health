@@ -31,6 +31,7 @@ class SecurityTestBasicController extends Controller
      */
     public function store(StoreSecurityTestBasicRequest $request)
     {
+        $title = $request->input('title');
         $url = $request->input('url');
 
         // Remove 'www.' from the beginning of a URL string if present.
@@ -43,16 +44,14 @@ class SecurityTestBasicController extends Controller
         // removing 'www.' if present, and trimming any trailing slash.
         $normalizedUrl = UrlHelper::normalizeUrl($request->input('url'));
 
-        // return response()->json(['result' => $normalizedUrl]);
 
-        // Create or find the website by slug
-        $website = ScannedWebsiteBasic::firstOrCreate(
+        // Create or update the website by slug
+        $website = ScannedWebsiteBasic::updateOrCreate(
             ['slug' => $normalizedUrl],
-            ['url' => $url]
+            ['url' => $url, 'title' => $title]
         );
 
         return response()->json(['result' => $website]);
-        // return response()->json(['normalizedUrl' => $normalizedUrl, 'scheme' => $scheme]);
 
         $test = SecurityTestBasic::create($request->validated());
 

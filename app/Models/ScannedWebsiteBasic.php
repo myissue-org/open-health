@@ -15,8 +15,8 @@ class ScannedWebsiteBasic extends Model
         'name',
         'url',
         'slug',
-        'description',
-        'created_by', // example
+        'title',
+        'created_by',
     ];
 
     // Relation to SecurityTestBasic
