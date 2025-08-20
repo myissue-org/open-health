@@ -38,7 +38,7 @@ class SecurityTestBasicController extends Controller
         $last_name = $request->input('last_name');
         $email = $request->input('email');
 
-        // Remove 'www.' from the beginning of a URL string if present.
+        // Remove 'www.' from the beginning if present.
         $slug = UrlHelper::removeWww($request->input('url'));
 
         //  Returns the scheme ('http' or 'https') of a URL, or null if not present.
