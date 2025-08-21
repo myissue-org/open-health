@@ -65,16 +65,17 @@ class SecurityTestBasicController extends Controller
         $speedMs = (int)(($endTime - $startTime) * 1000); // ms
 
 
-        // Add https to scanResults for scoring
-        $scanResults['https'] = ($scheme === 'https');
+        // Use the actual protocol after redirects, as detected by the scanner
+        $finalScheme = isset($scanResults['final_scheme']) ? $scanResults['final_scheme'] : $scheme;
+        $scanResults['https'] = ($finalScheme === 'https');
         $score = WebsiteScoreBasic::calculateScore($scanResults, $speedMs);
 
         $createdSecurityTest = SecurityTestBasic::create([
             'website_id' => $website->id,
             'test_ran_at' => now(),
             'score' => $score,
-            'https' => $scheme === 'https',
-            'website_prefix' => $scheme,
+            'https' => $finalScheme === 'https',
+            'website_prefix' => $finalScheme,
 
             'tls_version' => $scanResults['tls_version'],
             'ssl_expiry_date' => $scanResults['ssl_expiry_date'],
