@@ -12,50 +12,79 @@ class WebsiteScoreBasic
 	 */
 	public static function calculateScore(array $scanResults, $speedMs = null): int
 	{
+
 		$score = 0;
-		$max = 13; // number of checks (added extra for speed tiers)
+		$max = 0; // dynamic max: only count checks that are possible
+
 
 		// 1. HTTPS
-		if (!empty($scanResults['https'])) $score++;
+		if (array_key_exists('https', $scanResults)) {
+			$max++;
+			if (!empty($scanResults['https'])) $score++;
+		}
+
 
 		// 2. HSTS
-		if (!empty($scanResults['has_hsts'])) $score++;
+		if (array_key_exists('has_hsts', $scanResults)) {
+			$max++;
+			if (!empty($scanResults['has_hsts'])) $score++;
+		}
+
 
 		// 3. CSP
-		if (!empty($scanResults['has_csp'])) $score++;
+		if (array_key_exists('has_csp', $scanResults)) {
+			$max++;
+			if (!empty($scanResults['has_csp'])) $score++;
+		}
+
 
 		// 4. X-Frame-Options
-		if (!empty($scanResults['has_x_frame_options'])) $score++;
+		if (array_key_exists('has_x_frame_options', $scanResults)) {
+			$max++;
+			if (!empty($scanResults['has_x_frame_options'])) $score++;
+		}
+
 
 		// 5. X-Content-Type-Options
-		if (!empty($scanResults['has_x_content_type_options'])) $score++;
+		if (array_key_exists('has_x_content_type_options', $scanResults)) {
+			$max++;
+			if (!empty($scanResults['has_x_content_type_options'])) $score++;
+		}
+
 
 		// 6. TLS version (require at least TLS 1.2)
-		if (!empty($scanResults['tls_version']) && preg_match('/1\.(2|3)/', $scanResults['tls_version'])) $score++;
+		if (array_key_exists('tls_version', $scanResults)) {
+			$max++;
+			if (!empty($scanResults['tls_version']) && preg_match('/1\.(2|3)/', $scanResults['tls_version'])) $score++;
+		}
+
 
 		// 7. SSL expiry (must be in the future)
-		if (!empty($scanResults['ssl_expiry_date'])) {
-			$expiry = strtotime($scanResults['ssl_expiry_date']);
-			if ($expiry && $expiry > time()) $score++;
+		if (array_key_exists('ssl_expiry_date', $scanResults)) {
+			$max++;
+			if (!empty($scanResults['ssl_expiry_date'])) {
+				$expiry = strtotime($scanResults['ssl_expiry_date']);
+				if ($expiry && $expiry > time()) $score++;
+			}
 		}
+
 
 		// 8. DNS SPF
-		if (!empty($scanResults['dns_spf'])) $score++;
-
-		// 9. DNS DKIM
-		if (!empty($scanResults['dns_dkim'])) $score++;
-
-
-		// 10. Speed (under 3000ms)
-		if ($speedMs !== null) {
-			if ($speedMs <= 3000) $score++;
-			// Bonus: under 2000ms
-			if ($speedMs < 2000) $score++;
-			// Bonus: under 1000ms
-			if ($speedMs < 1000) $score++;
+		if (array_key_exists('dns_spf', $scanResults)) {
+			$max++;
+			if (!empty($scanResults['dns_spf'])) $score++;
 		}
 
-		// Return as 0-100
+
+		// 9. DNS DKIM
+		if (array_key_exists('dns_dkim', $scanResults)) {
+			$max++;
+			if (!empty($scanResults['dns_dkim'])) $score++;
+		}
+
+
+		// Return as 0-100, avoid division by zero
+		if ($max === 0) return 0;
 		return (int) round(($score / $max) * 100);
 	}
 }
