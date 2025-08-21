@@ -35,8 +35,12 @@ return new class extends Migration
             $table->boolean('has_hsts')->default(false);
             $table->boolean('has_x_content_type_options')->default(false);
 
+
             // Server info
             $table->string('server_header')->nullable();
+
+            // Website speed in milliseconds
+            $table->unsignedInteger('speed_ms')->nullable();
 
             // DNS records
             $table->boolean('dns_a_record')->default(false);

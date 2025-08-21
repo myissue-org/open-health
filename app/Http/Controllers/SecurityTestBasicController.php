@@ -87,8 +87,7 @@ class SecurityTestBasicController extends Controller
             'first_name' => $first_name,
             'last_name' => $last_name,
             'email' => $email,
-            // Save speed_ms if you have a column for it
-            // 'speed_ms' => $speedMs,
+            'speed_ms' => $speedMs,
         ]);
 
         $createdSecurityTest->load('website');

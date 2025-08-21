@@ -29,6 +29,7 @@ class SecurityTestBasic extends Model
         'dns_dmarc',
         'website_prefix',
         'test_ran_at',
+        'speed_ms',
 
         'first_name',
         'last_name',
