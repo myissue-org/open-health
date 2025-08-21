@@ -8,6 +8,7 @@ use App\Models\ScannedWebsiteBasic;
 use App\Models\SecurityTestBasic;
 use App\Helpers\UrlHelper;
 use App\Services\WebsiteSecurityScanner;
+use App\Services\WebsiteScoreBasic;
 
 class SecurityTestBasicController extends Controller
 {
@@ -64,10 +65,14 @@ class SecurityTestBasicController extends Controller
         $speedMs = (int)(($endTime - $startTime) * 1000); // ms
 
 
+        // Add https to scanResults for scoring
+        $scanResults['https'] = ($scheme === 'https');
+        $score = WebsiteScoreBasic::calculateScore($scanResults, $speedMs);
+
         $createdSecurityTest = SecurityTestBasic::create([
             'website_id' => $website->id,
             'test_ran_at' => now(),
-            'score' => 0,
+            'score' => $score,
             'https' => $scheme === 'https',
             'website_prefix' => $scheme,
 
