@@ -33,6 +33,8 @@ class SecurityTestBasicController extends Controller
      */
     public function store(StoreSecurityTestBasicRequest $request)
     {
+        // ...existing code...
+
         $title = $request->input('title');
         $url = $request->input('url');
         $first_name = $request->input('first_name');
@@ -63,6 +65,23 @@ class SecurityTestBasicController extends Controller
         $scanResults = $scanner->scan($url);
         $endTime = microtime(true);
         $speedMs = (int)(($endTime - $startTime) * 1000); // ms
+
+        // Flatten any array values in scanResults to strings (for DB columns)
+        $fieldsToFlatten = [
+            'tls_version',
+            'ssl_expiry_date',
+            'server_header',
+            'dns_a_record',
+            'dns_aaaa_record',
+            'dns_spf',
+            'dns_dkim',
+            'dns_dmarc',
+        ];
+        foreach ($fieldsToFlatten as $key) {
+            if (isset($scanResults[$key]) && is_array($scanResults[$key])) {
+                $scanResults[$key] = implode(', ', $scanResults[$key]);
+            }
+        }
 
 
         // Use the actual protocol after redirects, as detected by the scanner
@@ -100,6 +119,7 @@ class SecurityTestBasicController extends Controller
         // Add speed_ms to the response (even if not saved in DB yet)
         $response = $createdSecurityTest->toArray();
         $response['speed_ms'] = $speedMs;
+
         return response()->json($response, 201);
     }
 
