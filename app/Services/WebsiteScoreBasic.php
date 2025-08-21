@@ -13,7 +13,7 @@ class WebsiteScoreBasic
 	public static function calculateScore(array $scanResults, $speedMs = null): int
 	{
 		$score = 0;
-		$max = 10; // number of checks
+		$max = 13; // number of checks (added extra for speed tiers)
 
 		// 1. HTTPS
 		if (!empty($scanResults['https'])) $score++;
@@ -45,8 +45,15 @@ class WebsiteScoreBasic
 		// 9. DNS DKIM
 		if (!empty($scanResults['dns_dkim'])) $score++;
 
+
 		// 10. Speed (under 3000ms)
-		if ($speedMs !== null && $speedMs <= 3000) $score++;
+		if ($speedMs !== null) {
+			if ($speedMs <= 3000) $score++;
+			// Bonus: under 2000ms
+			if ($speedMs < 2000) $score++;
+			// Bonus: under 1000ms
+			if ($speedMs < 1000) $score++;
+		}
 
 		// Return as 0-100
 		return (int) round(($score / $max) * 100);
