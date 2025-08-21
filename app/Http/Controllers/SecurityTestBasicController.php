@@ -55,8 +55,14 @@ class SecurityTestBasicController extends Controller
             ['url' => $url, 'title' => $title]
         );
 
+
         $scanner = new WebsiteSecurityScanner();
+        // Measure website speed (simple HTTP GET timing)
+        $startTime = microtime(true);
         $scanResults = $scanner->scan($url);
+        $endTime = microtime(true);
+        $speedMs = (int)(($endTime - $startTime) * 1000); // ms
+
 
         $createdSecurityTest = SecurityTestBasic::create([
             'website_id' => $website->id,
@@ -81,10 +87,15 @@ class SecurityTestBasicController extends Controller
             'first_name' => $first_name,
             'last_name' => $last_name,
             'email' => $email,
+            // Save speed_ms if you have a column for it
+            // 'speed_ms' => $speedMs,
         ]);
 
         $createdSecurityTest->load('website');
-        return response()->json($createdSecurityTest, 201);
+        // Add speed_ms to the response (even if not saved in DB yet)
+        $response = $createdSecurityTest->toArray();
+        $response['speed_ms'] = $speedMs;
+        return response()->json($response, 201);
     }
 
     /**
