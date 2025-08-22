@@ -59,10 +59,6 @@ class WebsiteSecurityScanner
 			}
 		}
 
-		if ($error) {
-			Log::warning("SSL check cURL error for $httpsUrl: $error");
-		}
-
 		// HTTP headers
 		$headers = @get_headers($url, 1);
 		$server_header = $headers['Server'] ?? null;
@@ -80,9 +76,7 @@ class WebsiteSecurityScanner
 			}
 		}
 
-
 		// DNS records
-		$host = parse_url($url, PHP_URL_HOST);
 		$dns_a_record = dns_get_record($host, DNS_A) ? true : false;
 		$dns_aaaa_record = dns_get_record($host, DNS_AAAA) ? true : false;
 		$dns_spf = false;
