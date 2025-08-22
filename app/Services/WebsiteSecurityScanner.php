@@ -2,6 +2,9 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Log;
+
+
 class WebsiteSecurityScanner
 {
 	/**
@@ -13,6 +16,26 @@ class WebsiteSecurityScanner
 	public function scan(string $url): array
 	{
 		$scheme = parse_url($url, PHP_URL_SCHEME);
+
+		// Check if the given $url is served over HTTPS (SSL) start
+		// Force https
+		$httpsUrl = preg_replace("/^http:/i", "https:", $url);
+		$ch = curl_init($httpsUrl);
+		curl_setopt($ch, CURLOPT_NOBODY, true);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+
+		$result = curl_exec($ch);
+		$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+		$error = curl_error($ch);
+		curl_close($ch);
+		$hasSSL = ($result !== false && $httpCode >= 200 && $httpCode < 400);
+		// Check if the given $url is served over HTTPS (SSL) end
+
+		if ($error) {
+			Log::warning("SSL check cURL error for $httpsUrl: $error");
+		}
 
 		// HTTP headers
 		$headers = @get_headers($url, 1);
@@ -84,6 +107,7 @@ class WebsiteSecurityScanner
 			'dns_spf' => $dns_spf,
 			'dns_dkim' => $dns_dkim,
 			'dns_dmarc' => $dns_dmarc,
+			'hasSSL' => $hasSSL,
 		];
 	}
 }

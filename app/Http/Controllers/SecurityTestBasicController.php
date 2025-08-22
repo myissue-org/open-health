@@ -60,6 +60,9 @@ class SecurityTestBasicController extends Controller
 
 
         $scanner = new WebsiteSecurityScanner();
+
+
+
         // Measure website speed (simple HTTP GET timing)
         $startTime = microtime(true);
         $scanResults = $scanner->scan($url);
@@ -90,9 +93,8 @@ class SecurityTestBasicController extends Controller
             'website_id' => $website->id,
             'test_ran_at' => now(),
             'score' => $score,
-            'https' => true,
+            'https' => $scanResults['hasSSL'] ?? false,
             'website_prefix' => 'https',
-
             'tls_version' => $scanResults['tls_version'],
             'ssl_expiry_date' => $scanResults['ssl_expiry_date'],
             'has_csp' => $scanResults['has_csp'],
