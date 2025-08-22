@@ -89,11 +89,12 @@ class SecurityTestBasicController extends Controller
         $scanResults['https'] = ($finalScheme === 'https');
         $score = WebsiteScoreBasic::calculateScore($scanResults, $speedMs);
 
+
         $createdSecurityTest = SecurityTestBasic::create([
             'website_id' => $website->id,
             'test_ran_at' => now(),
             'score' => $score,
-            'https' => $finalScheme === 'https',
+            'https' => $scanResults['https'],
             'website_prefix' => $finalScheme,
 
             'tls_version' => $scanResults['tls_version'],
