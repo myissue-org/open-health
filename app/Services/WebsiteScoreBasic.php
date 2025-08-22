@@ -10,7 +10,7 @@ class WebsiteScoreBasic
 	 * @param int|null $speedMs
 	 * @return int
 	 */
-	public static function calculateScore(array $scanResults, $speedMs = null): int
+	public static function calculateScore(array $scanResults): int
 	{
 
 		$score = 0;

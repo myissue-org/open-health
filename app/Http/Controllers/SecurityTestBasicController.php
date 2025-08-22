@@ -33,8 +33,6 @@ class SecurityTestBasicController extends Controller
      */
     public function store(StoreSecurityTestBasicRequest $request)
     {
-        // ...existing code...
-
         $title = $request->input('title');
         $url = $request->input('url');
         $first_name = $request->input('first_name');
@@ -63,11 +61,7 @@ class SecurityTestBasicController extends Controller
 
 
 
-        // Measure website speed (simple HTTP GET timing)
-        $startTime = microtime(true);
         $scanResults = $scanner->scan($url);
-        $endTime = microtime(true);
-        $speedMs = (int)(($endTime - $startTime) * 1000); // ms
 
         // Flatten any array values in scanResults to strings (for DB columns)
         $fieldsToFlatten = [
@@ -87,7 +81,7 @@ class SecurityTestBasicController extends Controller
         }
 
         // Use the actual protocol after redirects, as detected by the scanner
-        $score = WebsiteScoreBasic::calculateScore($scanResults, $speedMs);
+        $score = WebsiteScoreBasic::calculateScore($scanResults,);
 
         $createdSecurityTest = SecurityTestBasic::create([
             'website_id' => $website->id,
@@ -111,13 +105,12 @@ class SecurityTestBasicController extends Controller
             'first_name' => $first_name,
             'last_name' => $last_name,
             'email' => $email,
-            'speed_ms' => $speedMs,
+            'speed_ms' => $scanResults['speedMs'],
         ]);
 
         $createdSecurityTest->load('website');
         // Add speed_ms to the response (even if not saved in DB yet)
         $response = $createdSecurityTest->toArray();
-        $response['speed_ms'] = $speedMs;
 
         return response()->json($response, 201);
     }

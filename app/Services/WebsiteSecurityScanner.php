@@ -8,14 +8,31 @@ use Illuminate\Support\Facades\Log;
 class WebsiteSecurityScanner
 {
 	/**
-	 * Scan a website for security headers, SSL info, and DNS records.
+
+	 * =========================
+	 * Network Call Summary:
+	 * =========================
 	 *
-	 * This method performs multiple network calls to gather comprehensive security information:
-	 *   1. HTTPS check (cURL): Determines if the site is accessible over HTTPS.
-	 *   2. SSL certificate fetch (stream_socket_client): Retrieves certificate details if HTTPS is available.
-	 *   3. HTTP headers fetch (get_headers): Collects security-related HTTP headers.
-	 *   4. DNS lookups (dns_get_record): Checks for A, AAAA, SPF, DKIM, and DMARC records.
+	 * 1. cURL call
+	 *    - Checks if the site is accessible over HTTPS (SSL).
 	 *
+	 * 2. stream_socket_client call (conditional)
+	 *    - Fetches SSL certificate details (only if HTTPS is available).
+	 *
+	 * 3. get_headers call
+	 *    - Fetches all HTTP headers for security checks.
+	 *
+	 * 4. dns_get_record calls
+	 *    - One for A record
+	 *    - One for AAAA record
+	 *    - One for TXT record (to check SPF, DKIM, DMARC)
+	 *
+	 * ----------------------------------------------------------
+	 * In total, this method makes at least 4 different types of
+	 * network calls, and up to 6 actual network requests if all
+	 * are executed. Each is needed for a different aspect of the
+	 * website security scan.
+	 * =========================
 	 * @param string $url
 	 * @return array
 	 */
@@ -23,6 +40,7 @@ class WebsiteSecurityScanner
 	{
 		$scheme = parse_url($url, PHP_URL_SCHEME);
 		$host = parse_url($url, PHP_URL_HOST);
+
 
 		/**
 		 * 1. HTTPS check (network call)
@@ -32,15 +50,16 @@ class WebsiteSecurityScanner
 		 */
 		$httpsUrl = preg_replace("/^http:/i", "https:", $url);
 		$ch = curl_init($httpsUrl);
-		curl_setopt($ch, CURLOPT_NOBODY, true);
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-		curl_setopt($ch, CURLOPT_TIMEOUT, 5);
-		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-
+		curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+		$start = microtime(true);
 		$result = curl_exec($ch);
+		$end = microtime(true);
 		$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 		$error = curl_error($ch);
 		curl_close($ch);
+
+		$speedMs = (int)(($end - $start) * 1000);
 		$hasSSL = ($result !== false && $httpCode >= 200 && $httpCode < 400);
 
 		if ($error) {
@@ -128,6 +147,7 @@ class WebsiteSecurityScanner
 			'dns_dkim' => $dns_dkim,
 			'dns_dmarc' => $dns_dmarc,
 			'hasSSL' => $hasSSL,
+			'speedMs' => $speedMs,
 		];
 	}
 }
