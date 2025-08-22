@@ -83,19 +83,15 @@ class SecurityTestBasicController extends Controller
             }
         }
 
-
         // Use the actual protocol after redirects, as detected by the scanner
-        $finalScheme = isset($scanResults['final_scheme']) ? $scanResults['final_scheme'] : $scheme;
-        $scanResults['https'] = ($finalScheme === 'https');
         $score = WebsiteScoreBasic::calculateScore($scanResults, $speedMs);
-
 
         $createdSecurityTest = SecurityTestBasic::create([
             'website_id' => $website->id,
             'test_ran_at' => now(),
             'score' => $score,
-            'https' => $scanResults['https'],
-            'website_prefix' => $finalScheme,
+            'https' => true,
+            'website_prefix' => 'https',
 
             'tls_version' => $scanResults['tls_version'],
             'ssl_expiry_date' => $scanResults['ssl_expiry_date'],
