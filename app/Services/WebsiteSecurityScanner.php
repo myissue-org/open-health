@@ -10,6 +10,12 @@ class WebsiteSecurityScanner
 	/**
 	 * Scan a website for security headers, SSL info, and DNS records.
 	 *
+	 * This method performs multiple network calls to gather comprehensive security information:
+	 *   1. HTTPS check (cURL): Determines if the site is accessible over HTTPS.
+	 *   2. SSL certificate fetch (stream_socket_client): Retrieves certificate details if HTTPS is available.
+	 *   3. HTTP headers fetch (get_headers): Collects security-related HTTP headers.
+	 *   4. DNS lookups (dns_get_record): Checks for A, AAAA, SPF, DKIM, and DMARC records.
+	 *
 	 * @param string $url
 	 * @return array
 	 */
@@ -18,7 +24,12 @@ class WebsiteSecurityScanner
 		$scheme = parse_url($url, PHP_URL_SCHEME);
 		$host = parse_url($url, PHP_URL_HOST);
 
-		// Check if the given $url is served over HTTPS (SSL)
+		/**
+		 * 1. HTTPS check (network call)
+		 * 		- Check if the given $url is served over HTTPS (SSL)
+		 *    - Purpose: To determine if the site is accessible over HTTPS (SSL).
+		 *    - Why: Needed to know if the site supports SSL and to proceed with SSL info fetch.
+		 */
 		$httpsUrl = preg_replace("/^http:/i", "https:", $url);
 		$ch = curl_init($httpsUrl);
 		curl_setopt($ch, CURLOPT_NOBODY, true);
@@ -36,7 +47,11 @@ class WebsiteSecurityScanner
 			Log::warning("SSL check cURL error for $httpsUrl: $error");
 		}
 
-		// SSL info (only if HTTPS is available)
+		/**
+		 * 2. SSL certificate fetch (network call, only if HTTPS is available)
+		 *    - Purpose: To retrieve SSL certificate details (expiry date, TLS version).
+		 *    - Why: cURL cannot fetch certificate info; stream_socket_client is required.
+		 */
 		$tls_version = null;
 		$ssl_expiry_date = null;
 		if ($hasSSL && $host) {
@@ -59,7 +74,11 @@ class WebsiteSecurityScanner
 			}
 		}
 
-		// HTTP headers
+		/**
+		 * 3. HTTP headers fetch (network call)
+		 *    - Purpose: To collect security-related HTTP headers.
+		 *    - Why: Used to check for headers like CSP, HSTS, X-Frame-Options, etc.
+		 */
 		$headers = @get_headers($url, 1);
 		$server_header = $headers['Server'] ?? null;
 		$has_csp = false;
@@ -76,7 +95,11 @@ class WebsiteSecurityScanner
 			}
 		}
 
-		// DNS records
+		/**
+		 * 4. DNS lookups (network calls)
+		 *    - Purpose: To check for A, AAAA, SPF, DKIM, and DMARC DNS records.
+		 *    - Why: These records are important for email and domain security.
+		 */
 		$dns_a_record = dns_get_record($host, DNS_A) ? true : false;
 		$dns_aaaa_record = dns_get_record($host, DNS_AAAA) ? true : false;
 		$dns_spf = false;
