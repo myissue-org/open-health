@@ -16,9 +16,9 @@ class WebsiteSecurityScanner
 	public function scan(string $url): array
 	{
 		$scheme = parse_url($url, PHP_URL_SCHEME);
+		$host = parse_url($url, PHP_URL_HOST);
 
-		// Check if the given $url is served over HTTPS (SSL) start
-		// Force https
+		// Check if the given $url is served over HTTPS (SSL)
 		$httpsUrl = preg_replace("/^http:/i", "https:", $url);
 		$ch = curl_init($httpsUrl);
 		curl_setopt($ch, CURLOPT_NOBODY, true);
@@ -31,13 +31,15 @@ class WebsiteSecurityScanner
 		$error = curl_error($ch);
 		curl_close($ch);
 		$hasSSL = ($result !== false && $httpCode >= 200 && $httpCode < 400);
-		// Check if the given $url is served over HTTPS (SSL) end
 
-		// SSL info
+		if ($error) {
+			Log::warning("SSL check cURL error for $httpsUrl: $error");
+		}
+
+		// SSL info (only if HTTPS is available)
 		$tls_version = null;
 		$ssl_expiry_date = null;
-		if ($scheme === 'https') {
-			$host = parse_url($url, PHP_URL_HOST);
+		if ($hasSSL && $host) {
 			$context = stream_context_create(['ssl' => ['capture_peer_cert' => true]]);
 			$client = @stream_socket_client("ssl://$host:443", $errno, $errstr, 5, STREAM_CLIENT_CONNECT, $context);
 			if ($client) {
