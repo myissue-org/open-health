@@ -81,7 +81,11 @@ class SecurityTestBasicController extends Controller
         }
 
         // Use the actual protocol after redirects, as detected by the scanner
-        $score = WebsiteScoreBasic::calculateScore($scanResults,);
+        $score = 200;
+        // $score = WebsiteScoreBasic::calculateScore($scanResults,);
+        $testos = WebsiteScoreBasic::calculateScore($scanResults,);
+
+        return response()->json(["testos er" => $testos], 201);
 
         $createdSecurityTest = SecurityTestBasic::create([
             'website_id' => $website->id,

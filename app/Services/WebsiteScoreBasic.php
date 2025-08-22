@@ -10,81 +10,27 @@ class WebsiteScoreBasic
 	 * @param int|null $speedMs
 	 * @return int
 	 */
-	public static function calculateScore(array $scanResults): int
+	public static function calculateScore(array $scanResults)
 	{
-
 		$score = 0;
-		$max = 0; // dynamic max: only count checks that are possible
+		$max = 0;
+
+		return $scanResults['hasSSL'];
 
 
-		// 1. HTTPS
-		if (array_key_exists('https', $scanResults)) {
+		// Is served over HTTPS (SSL)
+		if ($scanResults) {
 			$max++;
-			if (!empty($scanResults['https'])) $score++;
+			$score++;
 		}
 
-
-		// 2. HSTS
-		if (array_key_exists('has_hsts', $scanResults)) {
-			$max++;
-			if (!empty($scanResults['has_hsts'])) $score++;
-		}
-
-
-		// 3. CSP
-		if (array_key_exists('has_csp', $scanResults)) {
-			$max++;
-			if (!empty($scanResults['has_csp'])) $score++;
-		}
-
-
-		// 4. X-Frame-Options
-		if (array_key_exists('has_x_frame_options', $scanResults)) {
-			$max++;
-			if (!empty($scanResults['has_x_frame_options'])) $score++;
-		}
-
-
-		// 5. X-Content-Type-Options
-		if (array_key_exists('has_x_content_type_options', $scanResults)) {
-			$max++;
-			if (!empty($scanResults['has_x_content_type_options'])) $score++;
-		}
-
-
-		// 6. TLS version (require at least TLS 1.2)
-		if (array_key_exists('tls_version', $scanResults)) {
-			$max++;
-			if (!empty($scanResults['tls_version']) && preg_match('/1\.(2|3)/', $scanResults['tls_version'])) $score++;
-		}
-
-
-		// 7. SSL expiry (must be in the future)
-		if (array_key_exists('ssl_expiry_date', $scanResults)) {
-			$max++;
-			if (!empty($scanResults['ssl_expiry_date'])) {
-				$expiry = strtotime($scanResults['ssl_expiry_date']);
-				if ($expiry && $expiry > time()) $score++;
-			}
-		}
-
-
-		// 8. DNS SPF
-		if (array_key_exists('dns_spf', $scanResults)) {
-			$max++;
-			if (!empty($scanResults['dns_spf'])) $score++;
-		}
-
-
-		// 9. DNS DKIM
-		if (array_key_exists('dns_dkim', $scanResults)) {
-			$max++;
-			if (!empty($scanResults['dns_dkim'])) $score++;
-		}
 
 
 		// Return as 0-100, avoid division by zero
-		if ($max === 0) return 0;
+		if ($max === 0) {
+			return 0;
+		};
+
 		return (int) round(($score / $max) * 100);
 	}
 }
