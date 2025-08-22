@@ -33,27 +33,6 @@ class WebsiteSecurityScanner
 		$hasSSL = ($result !== false && $httpCode >= 200 && $httpCode < 400);
 		// Check if the given $url is served over HTTPS (SSL) end
 
-		if ($error) {
-			Log::warning("SSL check cURL error for $httpsUrl: $error");
-		}
-
-		// HTTP headers
-		$headers = @get_headers($url, 1);
-		$server_header = $headers['Server'] ?? null;
-		$has_csp = false;
-		$has_x_frame_options = false;
-		$has_hsts = false;
-		$has_x_content_type_options = false;
-		if ($headers && is_array($headers)) {
-			foreach ($headers as $key => $value) {
-				$k = strtolower($key);
-				if ($k === 'content-security-policy') $has_csp = true;
-				if ($k === 'x-frame-options') $has_x_frame_options = true;
-				if ($k === 'strict-transport-security') $has_hsts = true;
-				if ($k === 'x-content-type-options') $has_x_content_type_options = true;
-			}
-		}
-
 		// SSL info
 		$tls_version = null;
 		$ssl_expiry_date = null;
@@ -77,6 +56,28 @@ class WebsiteSecurityScanner
 				}
 			}
 		}
+
+		if ($error) {
+			Log::warning("SSL check cURL error for $httpsUrl: $error");
+		}
+
+		// HTTP headers
+		$headers = @get_headers($url, 1);
+		$server_header = $headers['Server'] ?? null;
+		$has_csp = false;
+		$has_x_frame_options = false;
+		$has_hsts = false;
+		$has_x_content_type_options = false;
+		if ($headers && is_array($headers)) {
+			foreach ($headers as $key => $value) {
+				$k = strtolower($key);
+				if ($k === 'content-security-policy') $has_csp = true;
+				if ($k === 'x-frame-options') $has_x_frame_options = true;
+				if ($k === 'strict-transport-security') $has_hsts = true;
+				if ($k === 'x-content-type-options') $has_x_content_type_options = true;
+			}
+		}
+
 
 		// DNS records
 		$host = parse_url($url, PHP_URL_HOST);
