@@ -15,21 +15,19 @@ class WebsiteScoreBasic
 		$score = 0;
 		$max = 0;
 
-		return $scanResults['hasSSL'];
-
-
-		// Is served over HTTPS (SSL)
-		if ($scanResults) {
-			$max++;
+		if (!empty($scanResults['hasSSL'])) {
 			$score++;
 		}
+		$max++;
 
+		if (!empty($scanResults['has_x_frame_options'])) {
+			$score++;
+		}
+		$max++;
 
-
-		// Return as 0-100, avoid division by zero
 		if ($max === 0) {
 			return 0;
-		};
+		}
 
 		return (int) round(($score / $max) * 100);
 	}
