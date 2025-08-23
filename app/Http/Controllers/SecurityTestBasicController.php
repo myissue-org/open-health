@@ -79,8 +79,13 @@ class SecurityTestBasicController extends Controller
             }
         }
 
-        // $score = WebsiteScoreBasic::calculateScore($scanResults,);
-        $score = WebsiteScoreBasic::calculateScore($scanResults,);
+
+
+        $scoreResult = WebsiteScoreBasic::calculateScore($scanResults);
+
+        $score = $scoreResult['score'];
+        $passedChecks = $scoreResult['passed_checks'];
+        $failedChecks = $scoreResult['failed_checks'];
 
         $createdSecurityTest = SecurityTestBasic::create([
             'website_id' => $website->id,
@@ -123,6 +128,8 @@ class SecurityTestBasicController extends Controller
         return response()->json([
             'created_test' => $response,
             'latest_tests' => $latestTests,
+            'passedChecks' => $passedChecks,
+            'failedChecks' => $failedChecks,
         ], 201);
     }
 
