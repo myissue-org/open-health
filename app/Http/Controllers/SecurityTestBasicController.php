@@ -56,7 +56,6 @@ class SecurityTestBasicController extends Controller
             ['url' => $url, 'title' => $title]
         );
 
-
         $scanner = new WebsiteSecurityScanner();
 
 
@@ -106,13 +105,25 @@ class SecurityTestBasicController extends Controller
             'last_name' => $last_name,
             'email' => $email,
             'speed_ms' => $scanResults['speedMs'],
+
+
         ]);
 
         $createdSecurityTest->load('website');
         // Add speed_ms to the response (even if not saved in DB yet)
         $response = $createdSecurityTest->toArray();
 
-        return response()->json($response, 201);
+        // Get the latest 10 tests for this website (by website_id)
+        $latestTests = SecurityTestBasic::with('website')
+            ->where('website_id', $website->id)
+            ->orderByDesc('test_ran_at')
+            ->take(10)
+            ->get();
+
+        return response()->json([
+            'created_test' => $response,
+            'latest_tests' => $latestTests,
+        ], 201);
     }
 
     /**
