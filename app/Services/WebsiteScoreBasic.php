@@ -25,12 +25,12 @@ class WebsiteScoreBasic
 		 * intercepting sensitive information such as login credentials or
 		 * payment details. A site with SSL (https://) is awarded 1 point.
 		 */
-		if (array_key_exists('hasSSL', $scanResults)) {
-			if (!empty($scanResults['hasSSL'])) {
+		if (array_key_exists('https', $scanResults)) {
+			if (!empty($scanResults['https'])) {
 				$score++;
-				$passedChecks[] = 'hasSSL';
+				$passedChecks[] = 'https';
 			} else {
-				$failedChecks[] = 'hasSSL';
+				$failedChecks[] = 'https';
 			}
 			$max++;  // Always increment max, so missing it lowers the score
 		}
@@ -135,7 +135,7 @@ class WebsiteScoreBasic
 			if (!empty($scanResults['has_x_content_type_options'])) {
 				$score++;
 				$max++;
-				$passedChecks[] = 'has_hsts';
+				$passedChecks[] = 'has_x_content_type_options';
 			}
 			// If X-Content-Type-Options is missing, don't increment $max
 		}

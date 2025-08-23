@@ -91,7 +91,7 @@ class SecurityTestBasicController extends Controller
             'website_id' => $website->id,
             'test_ran_at' => now(),
             'score' => $score,
-            'https' => $scanResults['hasSSL'] ?? false,
+            'https' => $scanResults['https'] ?? false,
             'website_prefix' => 'https',
             'tls_version' => $scanResults['tls_version'],
             'ssl_expiry_date' => $scanResults['ssl_expiry_date'],
@@ -152,9 +152,15 @@ class SecurityTestBasicController extends Controller
             ->take(10)
             ->get();
 
+        $scoreResult = WebsiteScoreBasic::calculateScore($securityTestBasic->toArray());
+        $passedChecks = $scoreResult['passed_checks'];
+        $failedChecks = $scoreResult['failed_checks'];
+
         return response()->json([
             'created_test' => $securityTestBasic,
             'latest_tests' => $latestTests,
+            'passedChecks' => $passedChecks,
+            'failedChecks' => $failedChecks,
         ]);
     }
 

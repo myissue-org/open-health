@@ -60,7 +60,7 @@ class WebsiteSecurityScanner
 		curl_close($ch);
 
 		$speedMs = (int)(($end - $start) * 1000);
-		$hasSSL = ($result !== false && $httpCode >= 200 && $httpCode < 400);
+		$https = ($result !== false && $httpCode >= 200 && $httpCode < 400);
 
 		if ($error) {
 			Log::warning("SSL check cURL error for $httpsUrl: $error");
@@ -73,7 +73,7 @@ class WebsiteSecurityScanner
 		 */
 		$tls_version = null;
 		$ssl_expiry_date = null;
-		if ($hasSSL && $host) {
+		if ($https && $host) {
 			$context = stream_context_create(['ssl' => ['capture_peer_cert' => true]]);
 			$client = @stream_socket_client("ssl://$host:443", $errno, $errstr, 5, STREAM_CLIENT_CONNECT, $context);
 			if ($client) {
@@ -146,7 +146,7 @@ class WebsiteSecurityScanner
 			'dns_spf' => $dns_spf,
 			'dns_dkim' => $dns_dkim,
 			'dns_dmarc' => $dns_dmarc,
-			'hasSSL' => $hasSSL,
+			'https' => $https,
 			'speedMs' => $speedMs,
 		];
 	}
