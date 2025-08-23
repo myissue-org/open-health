@@ -138,7 +138,17 @@ class SecurityTestBasicController extends Controller
             return response()->json(['error' => 'Related website not found.'], 404);
         }
 
-        return response()->json($securityTestBasic);
+        // Get the latest 10 tests for this website (by website_id)
+        $latestTests = SecurityTestBasic::with('website')
+            ->where('website_id', $securityTestBasic->website_id)
+            ->orderByDesc('test_ran_at')
+            ->take(10)
+            ->get();
+
+        return response()->json([
+            'created_test' => $securityTestBasic,
+            'latest_tests' => $latestTests,
+        ]);
     }
 
     /**
