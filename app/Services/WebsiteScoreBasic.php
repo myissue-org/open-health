@@ -15,16 +15,25 @@ class WebsiteScoreBasic
 		$score = 0;
 		$max = 0;
 
+		/**
+		 * Add 1 point if the website has a valid SSL certificate.
+		 */
 		if (!empty($scanResults['hasSSL'])) {
 			$score++;
 		}
 		$max++;
 
+		/**
+		 * Add 1 point if the website uses X-Frame-Options (protects against clickjacking).
+		 */
 		if (!empty($scanResults['has_x_frame_options'])) {
 			$score++;
 		}
 		$max++;
 
+		/**
+		 * If no checks are available, return 0 to avoid division by zero.
+		 */
 		if ($max === 0) {
 			return 0;
 		}
