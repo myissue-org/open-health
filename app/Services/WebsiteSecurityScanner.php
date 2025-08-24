@@ -89,11 +89,40 @@ class WebsiteSecurityScanner
 		}
 		$scheme = parse_url($url, PHP_URL_SCHEME);
 		$host = parse_url($url, PHP_URL_HOST);
-		if (!$host) {
-			Log::error("No valid host extracted from URL: $url");
+		if (!$host || !dns_get_record($host, DNS_A)) {
+			Log::error("DNS resolution failed for host: $host");
 			return [
-				'error' => 'Invalid host',
-				// ... same default return values as above ...
+				'error' => 'DNS resolution failed',
+				'server_header' => null,
+				'has_server_version_exposed' => false,
+				'has_csp' => false,
+				'is_csp_weak' => false,
+				'has_x_frame_options' => false,
+				'has_hsts' => false,
+				'is_hsts_preloaded' => false,
+				'has_x_content_type_options' => false,
+				'has_permissive_cors' => false,
+				'tls_version' => null,
+				'ssl_expiry_date' => null,
+				'is_tls_outdated' => false,
+				'is_ssl_expiring_soon' => false,
+				'has_weak_ciphers' => false,
+				'dns_a_record' => false,
+				'dns_aaaa_record' => false,
+				'dns_caa_record' => false,
+				'dnssec_enabled' => false,
+				'dns_spf' => false,
+				'dns_dkim' => false,
+				'dns_dmarc' => false,
+				'is_dmarc_strong' => false,
+				'has_mixed_content' => false,
+				'has_sri' => true,
+				'has_http_redirect' => false,
+				'has_secure_cookies' => true,
+				'has_httponly_cookies' => true,
+				'has_samesite_cookies' => true,
+				'https' => false,
+				'speedMs' => 0,
 			];
 		}
 
@@ -103,21 +132,41 @@ class WebsiteSecurityScanner
 		 *    - Why: Needed to know if the site supports SSL and to proceed with SSL info fetch.
 		 */
 		$httpsUrl = preg_replace("/^http:/i", "https:", $url);
-		$ch = curl_init($httpsUrl);
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-		curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-		$start = microtime(true);
-		$result = curl_exec($ch);
-		$end = microtime(true);
-		$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-		$error = curl_error($ch);
-		curl_close($ch);
+		$maxRetries = 2;
+		$retryCount = 0;
+		$https = false;
+		$speedMs = 0;
+		$error = null;
+		$httpCode = 0;
 
-		$speedMs = (int)(($end - $start) * 1000);
-		$https = ($result !== false && $httpCode >= 200 && $httpCode < 400);
+		while ($retryCount <= $maxRetries && !$https) {
+			$ch = curl_init($httpsUrl);
+			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+			curl_setopt($ch, CURLOPT_TIMEOUT, 15);
+			curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
+			curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+			$start = microtime(true);
+			$result = curl_exec($ch);
+			$end = microtime(true);
+			$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+			$error = curl_error($ch);
+			$curlErrno = curl_errno($ch);
+			curl_close($ch);
 
-		if ($error) {
-			Log::warning("SSL check cURL error for $httpsUrl: $error");
+			$body = $result;
+			$speedMs = (int)(($end - $start) * 1000);
+			$https = ($result !== false && $httpCode >= 200 && $httpCode < 400);
+
+			if ($error) {
+				Log::warning("SSL check cURL error for $httpsUrl (Attempt " . ($retryCount + 1) . "): $error (cURL errno: $curlErrno, HTTP code: $httpCode)");
+			}
+
+			if (!$https && $retryCount < $maxRetries) {
+				$retryCount++;
+				sleep(1); // Wait 1 second before retrying
+				continue;
+			}
+			break;
 		}
 
 		/**
@@ -186,7 +235,7 @@ class WebsiteSecurityScanner
 		 *    - Why: Used to check for headers like CSP, HSTS, X-Frame-Options, cookies, etc., and identify risky configurations.
 		 */
 		$headers = @get_headers($url, 1);
-		$server_header = $headers['Server'] ?? null;
+		$server_header = null;
 		$has_server_version_exposed = false;
 		$has_csp = false;
 		$is_csp_weak = false;
@@ -200,6 +249,13 @@ class WebsiteSecurityScanner
 		if ($headers && is_array($headers)) {
 			foreach ($headers as $key => $value) {
 				$k = strtolower($key);
+				if ($k === 'server') {
+					// Handle array or string for Server header
+					$server_header = is_array($value) ? implode(', ', $value) : $value;
+					if (is_string($server_header) && preg_match('/\d+\.\d+\.\d+/', $server_header)) {
+						$has_server_version_exposed = true;
+					}
+				}
 				if ($k === 'content-security-policy') {
 					$has_csp = true;
 					if (is_string($value) && (stripos($value, 'unsafe-inline') !== false || stripos($value, 'unsafe-eval') !== false || stripos($value, '*') !== false)) {
@@ -209,9 +265,6 @@ class WebsiteSecurityScanner
 				if ($k === 'x-frame-options') $has_x_frame_options = true;
 				if ($k === 'strict-transport-security') $has_hsts = true;
 				if ($k === 'x-content-type-options') $has_x_content_type_options = true;
-				if ($k === 'server' && is_string($value) && preg_match('/\d+\.\d+\.\d+/', $value)) {
-					$has_server_version_exposed = true;
-				}
 				if ($k === 'access-control-allow-origin' && (is_string($value) && $value === '*')) {
 					$has_permissive_cors = true;
 				}
@@ -244,6 +297,7 @@ class WebsiteSecurityScanner
 			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 			curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
 			curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+			curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
 			$pageContent = curl_exec($ch);
 			$error = curl_error($ch);
 			curl_close($ch);
@@ -277,6 +331,7 @@ class WebsiteSecurityScanner
 		curl_setopt($ch, CURLOPT_HEADER, true);
 		curl_setopt($ch, CURLOPT_NOBODY, true);
 		curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+		curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
 		curl_exec($ch);
 		$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 		$redirectUrl = curl_getinfo($ch, CURLINFO_REDIRECT_URL);
@@ -299,6 +354,7 @@ class WebsiteSecurityScanner
 			$ch = curl_init("https://hstspreload.org/api/v2/status?domain=$host");
 			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 			curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+			curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
 			$response = curl_exec($ch);
 			$error = curl_error($ch);
 			curl_close($ch);
@@ -359,7 +415,7 @@ class WebsiteSecurityScanner
 		}
 
 		return [
-			'error' => null,
+			'error' => $error ?: null,
 			'server_header' => $server_header,
 			'has_server_version_exposed' => $has_server_version_exposed,
 			'has_csp' => $has_csp,
@@ -389,6 +445,9 @@ class WebsiteSecurityScanner
 			'has_samesite_cookies' => $has_samesite_cookies,
 			'https' => $https,
 			'speedMs' => $speedMs,
+			'first_name' => null, // Added to match database schema
+			'last_name' => null,  // Added to match database schema
+			'email' => null,      // Added to match database schema
 		];
 	}
 }
