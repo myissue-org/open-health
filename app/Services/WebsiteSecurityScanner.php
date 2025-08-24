@@ -138,24 +138,45 @@ class WebsiteSecurityScanner
 		$speedMs = 0;
 		$error = null;
 		$httpCode = 0;
+		$redirectUrl = null;
 
 		while ($retryCount <= $maxRetries && !$https) {
 			$ch = curl_init($httpsUrl);
 			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-			curl_setopt($ch, CURLOPT_TIMEOUT, 15);
-			curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
+			curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+			curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36');
 			curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+			curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+			curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+			curl_setopt($ch, CURLOPT_VERBOSE, true);
+			curl_setopt($ch, CURLOPT_HTTPHEADER, [
+				'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+				'Accept-Language: en-US,en;q=0.5',
+				'Connection: keep-alive'
+			]);
+			$verbose = fopen('php://temp', 'w+');
+			curl_setopt($ch, CURLOPT_STDERR, $verbose);
 			$start = microtime(true);
 			$result = curl_exec($ch);
 			$end = microtime(true);
 			$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+			$redirectUrl = curl_getinfo($ch, CURLINFO_EFFECTIVE_URL);
 			$error = curl_error($ch);
 			$curlErrno = curl_errno($ch);
+			$sslVerified = curl_getinfo($ch, CURLINFO_SSL_VERIFYRESULT) === 0; // Check SSL verification
 			curl_close($ch);
 
 			$body = $result;
 			$speedMs = (int)(($end - $start) * 1000);
-			$https = ($result !== false && $httpCode >= 200 && $httpCode < 400);
+			// Consider HTTPS valid if SSL handshake succeeded, even for non-standard status codes like 455
+			$https = ($result !== false && $sslVerified && ($httpCode >= 200 && $httpCode < 400 || $httpCode === 455));
+
+			// Debug logging
+			rewind($verbose);
+			$verboseLog = stream_get_contents($verbose);
+			fclose($verbose);
+			Log::debug("HTTPS check for $httpsUrl (Attempt " . ($retryCount + 1) . "): HTTP code: $httpCode, Result: " . ($result !== false ? 'Success' : 'Failed') . ", SSL Verified: " . ($sslVerified ? 'Yes' : 'No') . ", Error: " . ($error ?: 'None') . ", cURL errno: $curlErrno, Redirect URL: $redirectUrl, Speed: $speedMs ms");
+			Log::debug("Verbose cURL output for $httpsUrl: $verboseLog");
 
 			if ($error) {
 				Log::warning("SSL check cURL error for $httpsUrl (Attempt " . ($retryCount + 1) . "): $error (cURL errno: $curlErrno, HTTP code: $httpCode)");
@@ -163,7 +184,7 @@ class WebsiteSecurityScanner
 
 			if (!$https && $retryCount < $maxRetries) {
 				$retryCount++;
-				sleep(1); // Wait 1 second before retrying
+				sleep(1);
 				continue;
 			}
 			break;
