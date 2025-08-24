@@ -18,12 +18,8 @@ class WebsiteScoreBasic
 		$passedChecks = [];
 		$failedChecks = [];
 
-
 		/**
-		 * SSL (Secure Sockets Layer) ensures that data transferred between the
-		 * website and its visitors is encrypted. This prevents attackers from
-		 * intercepting sensitive information such as login credentials or
-		 * payment details. A site with SSL (https://) is awarded 1 point.
+		 * HTTPS ensures that data transferred between the website and its visitors is encrypted.
 		 */
 		if (array_key_exists('https', $scanResults)) {
 			if (!empty($scanResults['https'])) {
@@ -32,15 +28,109 @@ class WebsiteScoreBasic
 			} else {
 				$failedChecks[] = 'https';
 			}
-			$max++;  // Always increment max, so missing it lowers the score
+			$max++; // Always increment max, critical for security
 		}
 
 		/**
-		 * X-Frame-Options is a response header that helps protect websites
-		 * against clickjacking attacks. It controls whether the site can be
-		 * embedded in an iframe on another domain. Enabling this header reduces
-		 * the risk of malicious overlays tricking users into unintended clicks.
-		 * If present, the site is awarded 1 point.
+		 * Mixed content checks for HTTP resources loaded on an HTTPS site, which undermines encryption.
+		 */
+		if (array_key_exists('has_mixed_content', $scanResults)) {
+			if (empty($scanResults['has_mixed_content'])) {
+				$score++;
+				$passedChecks[] = 'has_mixed_content';
+			} else {
+				$failedChecks[] = 'has_mixed_content';
+			}
+			$max++; // Always increment max, critical for security
+		}
+
+		/**
+		 * Outdated TLS versions (e.g., TLS 1.0 or 1.1) are vulnerable to attacks like BEAST or POODLE.
+		 */
+		if (array_key_exists('is_tls_outdated', $scanResults)) {
+			if (empty($scanResults['is_tls_outdated'])) {
+				$score++;
+				$passedChecks[] = 'is_tls_outdated';
+			} else {
+				$failedChecks[] = 'is_tls_outdated';
+			}
+			$max++; // Always increment max, critical for security
+		}
+
+		/**
+		 * Weak ciphers in TLS connections compromise encryption security.
+		 */
+		if (array_key_exists('has_weak_ciphers', $scanResults)) {
+			if (empty($scanResults['has_weak_ciphers'])) {
+				$score++;
+				$max++;
+				$passedChecks[] = 'has_weak_ciphers';
+			} else {
+				$failedChecks[] = 'has_weak_ciphers';
+			}
+			// If has_weak_ciphers is missing or true, don't increment $max
+		}
+
+		/**
+		 * SSL certificate expiring soon (e.g., within 30 days) disrupts access and trust.
+		 * Valid certificate (is_ssl_expiring_soon: false) is awarded 1 point.
+		 * Note: Temporary expirations may occur, so missing or true doesn't penalize heavily.
+		 */
+		if (array_key_exists('is_ssl_expiring_soon', $scanResults)) {
+			if (empty($scanResults['is_ssl_expiring_soon'])) {
+				$score++;
+				$max++;
+				$passedChecks[] = 'is_ssl_expiring_soon';
+			} else {
+				$failedChecks[] = 'is_ssl_expiring_soon';
+			}
+			// If is_ssl_expiring_soon is missing or true, don't increment $max
+		}
+
+		/**
+		 * Secure cookies ensure cookies are sent only over HTTPS, protecting against interception.
+		 */
+		if (array_key_exists('has_secure_cookies', $scanResults)) {
+			if (!empty($scanResults['has_secure_cookies'])) {
+				$score++;
+				$max++;
+				$passedChecks[] = 'has_secure_cookies';
+			} else {
+				$failedChecks[] = 'has_secure_cookies';
+			}
+			// If has_secure_cookies is missing or false, don't increment $max
+		}
+
+		/**
+		 * HttpOnly cookies prevent JavaScript access, protecting against XSS attacks.
+		 */
+		if (array_key_exists('has_httponly_cookies', $scanResults)) {
+			if (!empty($scanResults['has_httponly_cookies'])) {
+				$score++;
+				$max++;
+				$passedChecks[] = 'has_httponly_cookies';
+			} else {
+				$failedChecks[] = 'has_httponly_cookies';
+			}
+			// If has_httponly_cookies is missing or false, don't increment $max
+		}
+
+		/**
+		 * SameSite cookies restrict cross-site requests, protecting against CSRF attacks.
+		 */
+		if (array_key_exists('has_samesite_cookies', $scanResults)) {
+			if (!empty($scanResults['has_samesite_cookies'])) {
+				$score++;
+				$max++;
+				$passedChecks[] = 'has_samesite_cookies';
+			} else {
+				$failedChecks[] = 'has_samesite_cookies';
+			}
+			// If has_samesite_cookies is missing or false, don't increment $max
+		}
+
+		/**
+		 * X-Frame-Options is a response header that helps protect websites against clickjacking attacks.
 		 */
 		if (array_key_exists('has_x_frame_options', $scanResults)) {
 			if (!empty($scanResults['has_x_frame_options'])) {
@@ -49,16 +139,11 @@ class WebsiteScoreBasic
 			} else {
 				$failedChecks[] = 'has_x_frame_options';
 			}
-			$max++;  // Always increment max, so missing it lowers the score
+			$max++; // Always increment max
 		}
 
-
 		/**
-		 * Only add DNS A record to the score if present, so missing it doesn't penalize.
-		 * Purpose: The DNS A record ensures the domain resolves to an IPv4 address, which is required for most web traffic.
-		 * Note: Some domains may not have an A record if they are not intended to be accessed via IPv4, or are used for other purposes.
-		 * Automated scans may report 'false' for A record even on domains that are secure or used only for IPv6.
-		 * So scoring strictly on A record will unfairly penalize them. This is a common issue in automated security scoring.
+		 * DNS A record ensures the domain resolves to an IPv4 address, required for most web traffic.
 		 */
 		if (array_key_exists('dns_a_record', $scanResults)) {
 			if (!empty($scanResults['dns_a_record'])) {
@@ -67,15 +152,11 @@ class WebsiteScoreBasic
 			} else {
 				$failedChecks[] = 'dns_a_record';
 			}
-			$max++; // Always increment max, so missing it lowers the score
+			$max++; // Always increment max
 		}
 
 		/**
-		 * Only add DNS AAAA record to the score if present, so missing it doesn't penalize.
-		 * Purpose: The DNS AAAA record ensures the domain resolves to an IPv6 address, supporting modern network infrastructure.
-		 * Note: Many domains do not have an AAAA record if they do not support IPv6, which is still common and not a security risk.
-		 * Automated scans may report 'false' for AAAA record even on secure, well-maintained sites.
-		 * So scoring strictly on AAAA record will unfairly penalize them. This is a common issue in automated security scoring.
+		 * DNS AAAA record ensures the domain resolves to an IPv6 address, supporting modern network infrastructure.
 		 */
 		if (array_key_exists('dns_aaaa_record', $scanResults)) {
 			if (!empty($scanResults['dns_aaaa_record'])) {
@@ -86,17 +167,8 @@ class WebsiteScoreBasic
 			// If AAAA record is missing, don't increment $max
 		}
 
-
-
 		/**
-		 * Only add CSP (Content Security Policy) to the score if present, so missing 
-		 * CSP (Content Security Policy) doesn't penalize.
-		 * Purpose: CSP helps prevent cross-site scripting (XSS), clickjacking, and other code injection attacks
-		 * by specifying which dynamic resources are allowed to load.
-		 * Note: Many large sites like google.com do not send a Content-Security-Policy header to all user agents,
-		 * often due to legacy browser support, complex infrastructure, or because they use other security mechanisms.
-		 * As a result, automated scans may report 'false' for CSP even on secure, well-maintained sites.
-		 * So scoring strictly on CSP will unfairly penalize them. This is a common issue in automated security scoring.
+		 * CSP (Content Security Policy) helps prevent XSS, clickjacking, and other code injection attacks.
 		 */
 		if (array_key_exists('has_csp', $scanResults)) {
 			if (!empty($scanResults['has_csp'])) {
@@ -108,12 +180,7 @@ class WebsiteScoreBasic
 		}
 
 		/**
-		 * Only add HSTS (Strict-Transport-Security) to the score if present, so missing HSTS doesn't penalize.
-		 * Purpose: HSTS forces browsers to use HTTPS, protecting users from protocol downgrade attacks and cookie hijacking.
-		 * Note: Many large sites like google.com do not send a Strict-Transport-Security header to all user agents,
-		 * sometimes only sending it to specific regions, browsers, or over HTTPS. This is often due to compatibility,
-		 * infrastructure, or deployment strategies. As a result, automated scans may report 'false' for HSTS even on
-		 * secure sites. So scoring strictly on HSTS will unfairly penalize them. This is a common issue in automated security scoring.
+		 * HSTS (Strict-Transport-Security) forces browsers to use HTTPS, protecting against downgrade attacks.
 		 */
 		if (array_key_exists('has_hsts', $scanResults)) {
 			if (!empty($scanResults['has_hsts'])) {
@@ -125,11 +192,7 @@ class WebsiteScoreBasic
 		}
 
 		/**
-		 * Only add X-Content-Type-Options to the score if present, so missing it doesn't penalize.
-		 * Purpose: This header prevents browsers from interpreting files as a different MIME type, which helps prevent attacks.
-		 * Note: Many large sites like google.com do not send X-Content-Type-Options to all user agents,
-		 * often due to legacy support, infrastructure, or deployment strategies. Automated scans may report 'false'
-		 * even on secure sites. So scoring strictly on this header will unfairly penalize them.
+		 * X-Content-Type-Options prevents browsers from interpreting files as a different MIME type.
 		 */
 		if (array_key_exists('has_x_content_type_options', $scanResults)) {
 			if (!empty($scanResults['has_x_content_type_options'])) {
@@ -141,11 +204,7 @@ class WebsiteScoreBasic
 		}
 
 		/**
-		 * Only add SPF (Sender Policy Framework) to the score if present, so missing SPF doesn't penalize.
-		 * Purpose: SPF helps prevent email spoofing by specifying which mail servers are allowed to send email for the domain.
-		 * Note: Many large sites like google.com do not publish SPF records on their main domain, or use other mechanisms.
-		 * Automated scans may report 'false' for SPF even on secure, well-maintained sites.
-		 * So scoring strictly on SPF will unfairly penalize them. This is a common issue in automated security scoring.
+		 * SPF helps prevent email spoofing by specifying allowed mail servers.
 		 */
 		if (array_key_exists('dns_spf', $scanResults)) {
 			if (!empty($scanResults['dns_spf'])) {
@@ -157,11 +216,7 @@ class WebsiteScoreBasic
 		}
 
 		/**
-		 * Only add DKIM (DomainKeys Identified Mail) to the score if present, so missing DKIM doesn't penalize.
-		 * Purpose: DKIM helps prevent email spoofing by allowing the receiver to check that an email was indeed sent and authorized by the owner of that domain.
-		 * Note: Many large sites like google.com do not publish DKIM records on their main domain, or use subdomains or other mechanisms.
-		 * Automated scans may report 'false' for DKIM even on secure, well-maintained sites.
-		 * So scoring strictly on DKIM will unfairly penalize them. This is a common issue in automated security scoring.
+		 * DKIM helps verify that an email was sent and authorized by the domain owner.
 		 */
 		if (array_key_exists('dns_dkim', $scanResults)) {
 			if (!empty($scanResults['dns_dkim'])) {
@@ -172,13 +227,8 @@ class WebsiteScoreBasic
 			// If DKIM is missing, don't increment $max
 		}
 
-
 		/**
-		 * Only add DMARC (Domain-based Message Authentication, Reporting, and Conformance) to the score if present, so missing DMARC doesn't penalize.
-		 * Purpose: DMARC helps prevent email spoofing by allowing domain owners to specify how unauthenticated emails should be handled.
-		 * Note: Many large sites like google.com do not publish DMARC records on their main domain, or use subdomains or other mechanisms.
-		 * Automated scans may report 'false' for DMARC even on secure, well-maintained sites.
-		 * So scoring strictly on DMARC will unfairly penalize them. This is a common issue in automated security scoring.
+		 * DMARC allows domain owners to specify how unauthenticated emails should be handled.
 		 */
 		if (array_key_exists('dns_dmarc', $scanResults)) {
 			if (!empty($scanResults['dns_dmarc'])) {
