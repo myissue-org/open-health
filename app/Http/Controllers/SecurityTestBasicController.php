@@ -61,7 +61,7 @@ class SecurityTestBasicController extends Controller
             // Check for scanner errors
             if ($scanResults['error']) {
                 Log::error("Scanner error for URL {$url}: {$scanResults['error']}");
-                return response()->json(['error' => 'Scan failed: ' . $scanResults['error']], 422);
+                return response()->json(['error' => 'Scan failed. The URL may not exist or is unreachable: ' . $scanResults['error']], 422);
             }
 
             // Derive passed and failed checks for response (if needed)
