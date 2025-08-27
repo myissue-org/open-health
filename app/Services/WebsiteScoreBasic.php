@@ -8,7 +8,7 @@ class WebsiteScoreBasic
 	 * Calculate a security score (0-100) based on scan results and speed.
 	 * @param array $scanResults
 	 * @param int|null $speedMs
-	 * @return int
+	 * @return array
 	 */
 	public static function calculateScore(array $scanResults)
 	{
@@ -24,9 +24,9 @@ class WebsiteScoreBasic
 		if (array_key_exists('https', $scanResults)) {
 			if (!empty($scanResults['https'])) {
 				$score++;
-				$passedChecks[] = 'https';
+				$passedChecks['https'] = true; // Store value
 			} else {
-				$failedChecks[] = 'https';
+				$failedChecks['https'] = false; // Store value
 			}
 			$max++; // Always increment max, critical for security
 		}
@@ -37,9 +37,9 @@ class WebsiteScoreBasic
 		if (array_key_exists('has_mixed_content', $scanResults)) {
 			if (empty($scanResults['has_mixed_content'])) {
 				$score++;
-				$passedChecks[] = 'has_mixed_content';
+				$passedChecks['has_mixed_content'] = false; // False is passing for this check
 			} else {
-				$failedChecks[] = 'has_mixed_content';
+				$failedChecks['has_mixed_content'] = true; // True is failing
 			}
 			$max++; // Always increment max, critical for security
 		}
@@ -50,9 +50,9 @@ class WebsiteScoreBasic
 		if (array_key_exists('is_tls_outdated', $scanResults)) {
 			if (empty($scanResults['is_tls_outdated'])) {
 				$score++;
-				$passedChecks[] = 'is_tls_outdated';
+				$passedChecks['is_tls_outdated'] = false; // False is passing
 			} else {
-				$failedChecks[] = 'is_tls_outdated';
+				$failedChecks['is_tls_outdated'] = true; // True is failing
 			}
 			$max++; // Always increment max, critical for security
 		}
@@ -64,27 +64,23 @@ class WebsiteScoreBasic
 			if (empty($scanResults['has_weak_ciphers'])) {
 				$score++;
 				$max++;
-				$passedChecks[] = 'has_weak_ciphers';
+				$passedChecks['has_weak_ciphers'] = false; // False is passing
 			} else {
-				$failedChecks[] = 'has_weak_ciphers';
+				$failedChecks['has_weak_ciphers'] = true; // True is failing
 			}
-			// If has_weak_ciphers is missing or true, don't increment $max
 		}
 
 		/**
 		 * SSL certificate expiring soon (e.g., within 30 days) disrupts access and trust.
-		 * Valid certificate (is_ssl_expiring_soon: false) is awarded 1 point.
-		 * Note: Temporary expirations may occur, so missing or true doesn't penalize heavily.
 		 */
 		if (array_key_exists('is_ssl_expiring_soon', $scanResults)) {
 			if (empty($scanResults['is_ssl_expiring_soon'])) {
 				$score++;
 				$max++;
-				$passedChecks[] = 'is_ssl_expiring_soon';
+				$passedChecks['is_ssl_expiring_soon'] = false; // False is passing
 			} else {
-				$failedChecks[] = 'is_ssl_expiring_soon';
+				$failedChecks['is_ssl_expiring_soon'] = true; // True is failing
 			}
-			// If is_ssl_expiring_soon is missing or true, don't increment $max
 		}
 
 		/**
@@ -94,11 +90,10 @@ class WebsiteScoreBasic
 			if (!empty($scanResults['has_secure_cookies'])) {
 				$score++;
 				$max++;
-				$passedChecks[] = 'has_secure_cookies';
+				$passedChecks['has_secure_cookies'] = true; // True is passing
 			} else {
-				$failedChecks[] = 'has_secure_cookies';
+				$failedChecks['has_secure_cookies'] = false; // False is failing
 			}
-			// If has_secure_cookies is missing or false, don't increment $max
 		}
 
 		/**
@@ -108,11 +103,10 @@ class WebsiteScoreBasic
 			if (!empty($scanResults['has_httponly_cookies'])) {
 				$score++;
 				$max++;
-				$passedChecks[] = 'has_httponly_cookies';
+				$passedChecks['has_httponly_cookies'] = true; // True is passing
 			} else {
-				$failedChecks[] = 'has_httponly_cookies';
+				$failedChecks['has_httponly_cookies'] = false; // False is failing
 			}
-			// If has_httponly_cookies is missing or false, don't increment $max
 		}
 
 		/**
@@ -122,11 +116,10 @@ class WebsiteScoreBasic
 			if (!empty($scanResults['has_samesite_cookies'])) {
 				$score++;
 				$max++;
-				$passedChecks[] = 'has_samesite_cookies';
+				$passedChecks['has_samesite_cookies'] = true; // True is passing
 			} else {
-				$failedChecks[] = 'has_samesite_cookies';
+				$failedChecks['has_samesite_cookies'] = false; // False is failing
 			}
-			// If has_samesite_cookies is missing or false, don't increment $max
 		}
 
 		/**
@@ -135,9 +128,9 @@ class WebsiteScoreBasic
 		if (array_key_exists('has_x_frame_options', $scanResults)) {
 			if (!empty($scanResults['has_x_frame_options'])) {
 				$score++;
-				$passedChecks[] = 'has_x_frame_options';
+				$passedChecks['has_x_frame_options'] = true; // True is passing
 			} else {
-				$failedChecks[] = 'has_x_frame_options';
+				$failedChecks['has_x_frame_options'] = false; // False is failing
 			}
 			$max++; // Always increment max
 		}
@@ -148,9 +141,9 @@ class WebsiteScoreBasic
 		if (array_key_exists('dns_a_record', $scanResults)) {
 			if (!empty($scanResults['dns_a_record'])) {
 				$score++;
-				$passedChecks[] = 'dns_a_record';
+				$passedChecks['dns_a_record'] = true; // True is passing
 			} else {
-				$failedChecks[] = 'dns_a_record';
+				$failedChecks['dns_a_record'] = false; // False is failing
 			}
 			$max++; // Always increment max
 		}
@@ -162,9 +155,10 @@ class WebsiteScoreBasic
 			if (!empty($scanResults['dns_aaaa_record'])) {
 				$score++;
 				$max++;
-				$passedChecks[] = 'dns_aaaa_record';
+				$passedChecks['dns_aaaa_record'] = true; // True is passing
+			} else {
+				$failedChecks['dns_aaaa_record'] = false; // False is failing
 			}
-			// If AAAA record is missing, don't increment $max
 		}
 
 		/**
@@ -174,9 +168,10 @@ class WebsiteScoreBasic
 			if (!empty($scanResults['has_csp'])) {
 				$score++;
 				$max++;
-				$passedChecks[] = 'has_csp';
+				$passedChecks['has_csp'] = true; // True is passing
+			} else {
+				$failedChecks['has_csp'] = false; // False is failing
 			}
-			// If CSP is missing, don't increment $max
 		}
 
 		/**
@@ -186,9 +181,10 @@ class WebsiteScoreBasic
 			if (!empty($scanResults['has_hsts'])) {
 				$score++;
 				$max++;
-				$passedChecks[] = 'has_hsts';
+				$passedChecks['has_hsts'] = true; // True is passing
+			} else {
+				$failedChecks['has_hsts'] = false; // False is failing
 			}
-			// If HSTS is missing, don't increment $max
 		}
 
 		/**
@@ -198,9 +194,10 @@ class WebsiteScoreBasic
 			if (!empty($scanResults['has_x_content_type_options'])) {
 				$score++;
 				$max++;
-				$passedChecks[] = 'has_x_content_type_options';
+				$passedChecks['has_x_content_type_options'] = true; // True is passing
+			} else {
+				$failedChecks['has_x_content_type_options'] = false; // False is failing
 			}
-			// If X-Content-Type-Options is missing, don't increment $max
 		}
 
 		/**
@@ -210,9 +207,10 @@ class WebsiteScoreBasic
 			if (!empty($scanResults['dns_spf'])) {
 				$score++;
 				$max++;
-				$passedChecks[] = 'dns_spf';
+				$passedChecks['dns_spf'] = true; // True is passing
+			} else {
+				$failedChecks['dns_spf'] = false; // False is failing
 			}
-			// If SPF is missing, don't increment $max
 		}
 
 		/**
@@ -222,9 +220,10 @@ class WebsiteScoreBasic
 			if (!empty($scanResults['dns_dkim'])) {
 				$score++;
 				$max++;
-				$passedChecks[] = 'dns_dkim';
+				$passedChecks['dns_dkim'] = true; // True is passing
+			} else {
+				$failedChecks['dns_dkim'] = false; // False is failing
 			}
-			// If DKIM is missing, don't increment $max
 		}
 
 		/**
@@ -234,9 +233,10 @@ class WebsiteScoreBasic
 			if (!empty($scanResults['dns_dmarc'])) {
 				$score++;
 				$max++;
-				$passedChecks[] = 'dns_dmarc';
+				$passedChecks['dns_dmarc'] = true; // True is passing
+			} else {
+				$failedChecks['dns_dmarc'] = false; // False is failing
 			}
-			// If DMARC is missing, don't increment $max
 		}
 
 		/**
