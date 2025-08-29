@@ -141,7 +141,7 @@ Please ensure your code follows the project's coding standards and includes appr
 
 ## Security Vulnerabilities
 
-If you discover a security vulnerability within OpenHealth, please send an email to the maintainers at [security@myissue.studio](mailto:security@myissue.studio). We appreciate your help in keeping OpenHealth secure.
+If you discover a security vulnerability within OpenHealth, please send an email to the maintainers. We appreciate your help in keeping OpenHealth secure.
 
 ## License
 
