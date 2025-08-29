@@ -107,24 +107,6 @@ curl -X POST http://localhost:8000/api/v1/security-test-basics \
 -d '{"url": "https://example.com"}'
 ```
 
-### Example Response
-
-```json
-{
-  "id": 45,
-  "url": "https://example.com",
-  "score": 91,
-  "status": "Minimal Risk",
-  "checks": {
-    "https": "Secure: Data is encrypted",
-    "tls_version": "High Risk: Upgrade to TLS 1.2 or 1.3",
-    "hsts": "Moderate Risk: Enable HSTS header",
-    ...
-  },
-  "created_at": "2025-08-29T11:19:00Z"
-}
-```
-
 ---
 
 ## Contributing
