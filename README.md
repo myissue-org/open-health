@@ -33,7 +33,7 @@ To get started with OpenHealth, follow these steps:
 1. **Clone the Repository**:
 
     ```bash
-    git clone git@github.com:myissue-org/open-health.git
+    git clone git@github.com:myissue-studio/open-health.git
     cd open-health
     ```
 
